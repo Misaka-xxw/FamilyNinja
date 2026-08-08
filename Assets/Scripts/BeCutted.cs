@@ -14,6 +14,10 @@ public class BeCutted : MonoBehaviour
     [SerializeField, Min(0f)] private float separateSpeed = 2.8f;
     [SerializeField, Min(0f)] private float extraAngularSpeed = 90f;
 
+    [Header("有效切割判定")]
+    [SerializeField, Range(0f, 0.5f)] private float minimumSmallerAreaRatio = 0.12f;
+    [SerializeField, Range(0f, 1f)] private float minimumCutLengthRatio = 0.18f;
+
     private PolygonCollider2D polygonCollider;
     private CharacterMovement characterMovement;
     private Vector2 localEntryPoint;
@@ -172,6 +176,12 @@ public class BeCutted : MonoBehaviour
     /// </summary>
     private void Cut(Vector2 entryPoint, Vector2 exitPoint)
     {
+        if (!IsCutLargeEnough(entryPoint, exitPoint))
+        {
+            hasEntryPoint = false;
+            return;
+        }
+
         if (deadPrefab == null)
         {
             Debug.LogWarning($"{name} 尚未给 BeCutted 配置 deadPrefab。", this);
@@ -195,6 +205,129 @@ public class BeCutted : MonoBehaviour
 
         GameController.Instance?.AddScore();
         Destroy(gameObject);
+    }
+
+    /// <summary>
+    /// 同时检查切口长度和切线两侧面积，避免擦过头发等边缘区域时触发切割。
+    /// </summary>
+    private bool IsCutLargeEnough(Vector2 entryPoint, Vector2 exitPoint)
+    {
+        Vector2 cutVector = exitPoint - entryPoint;
+        float characterSize = GetLocalColliderSize();
+        if (cutVector.magnitude < characterSize * minimumCutLengthRatio)
+        {
+            return false;
+        }
+
+        Vector2 cutNormal = new Vector2(-cutVector.y, cutVector.x).normalized;
+        Vector2 cutPoint = (entryPoint + exitPoint) * 0.5f;
+        float positiveArea = 0f;
+        float negativeArea = 0f;
+
+        for (int pathIndex = 0; pathIndex < polygonCollider.pathCount; pathIndex++)
+        {
+            Vector2[] sourcePath = polygonCollider.GetPath(pathIndex);
+            var path = new List<Vector2>(sourcePath.Length);
+            foreach (Vector2 point in sourcePath)
+            {
+                path.Add(point + polygonCollider.offset);
+            }
+
+            positiveArea += CalculateClippedArea(path, cutPoint, cutNormal, true);
+            negativeArea += CalculateClippedArea(path, cutPoint, cutNormal, false);
+        }
+
+        float totalArea = positiveArea + negativeArea;
+        if (totalArea <= 0.00001f)
+        {
+            return false;
+        }
+
+        float smallerAreaRatio = Mathf.Min(positiveArea, negativeArea) / totalArea;
+        return smallerAreaRatio >= minimumSmallerAreaRatio;
+    }
+
+    /// <summary>
+    /// 获取碰撞体所有路径在角色局部坐标中的包围盒对角线长度。
+    /// </summary>
+    private float GetLocalColliderSize()
+    {
+        Vector2 minimum = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+        Vector2 maximum = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+
+        for (int pathIndex = 0; pathIndex < polygonCollider.pathCount; pathIndex++)
+        {
+            Vector2[] path = polygonCollider.GetPath(pathIndex);
+            foreach (Vector2 sourcePoint in path)
+            {
+                Vector2 point = sourcePoint + polygonCollider.offset;
+                minimum = Vector2.Min(minimum, point);
+                maximum = Vector2.Max(maximum, point);
+            }
+        }
+
+        return (maximum - minimum).magnitude;
+    }
+
+    /// <summary>
+    /// 用半平面裁剪多边形，并计算保留部分的面积。
+    /// </summary>
+    private static float CalculateClippedArea(List<Vector2> polygon, Vector2 cutPoint,
+        Vector2 cutNormal, bool keepPositive)
+    {
+        if (polygon.Count < 3)
+        {
+            return 0f;
+        }
+
+        var clipped = new List<Vector2>();
+        Vector2 previous = polygon[polygon.Count - 1];
+        float previousDistance = Vector2.Dot(previous - cutPoint, cutNormal);
+        bool previousInside = keepPositive ? previousDistance >= 0f : previousDistance <= 0f;
+
+        foreach (Vector2 current in polygon)
+        {
+            float currentDistance = Vector2.Dot(current - cutPoint, cutNormal);
+            bool currentInside = keepPositive ? currentDistance >= 0f : currentDistance <= 0f;
+
+            if (currentInside != previousInside)
+            {
+                float progress = previousDistance / (previousDistance - currentDistance);
+                clipped.Add(Vector2.Lerp(previous, current, progress));
+            }
+
+            if (currentInside)
+            {
+                clipped.Add(current);
+            }
+
+            previous = current;
+            previousDistance = currentDistance;
+            previousInside = currentInside;
+        }
+
+        return CalculatePolygonArea(clipped);
+    }
+
+    /// <summary>
+    /// 使用鞋带公式计算多边形面积。
+    /// </summary>
+    private static float CalculatePolygonArea(List<Vector2> polygon)
+    {
+        if (polygon.Count < 3)
+        {
+            return 0f;
+        }
+
+        float twiceArea = 0f;
+        for (int i = 0; i < polygon.Count; i++)
+        {
+            Vector2 current = polygon[i];
+            Vector2 next = polygon[(i + 1) % polygon.Count];
+            twiceArea += current.x * next.y - next.x * current.y;
+        }
+
+        return Mathf.Abs(twiceArea) * 0.5f;
     }
 
     /// <summary>
