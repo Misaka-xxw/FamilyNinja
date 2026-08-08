@@ -107,12 +107,14 @@ public class CharacterSpawner : MonoBehaviour
 
         if (edge == 0)
         {
-            position = new Vector3(bounds.min.x + inset, Random.Range(bounds.min.y, bounds.center.y), 0f);
+            position = new Vector3(bounds.min.x + inset,
+                Random.Range(bounds.min.y, Mathf.Lerp(bounds.min.y, bounds.max.y, 0.28f)), 0f);
             horizontalVelocity = Random.Range(horizontalSpeedRange.x, horizontalSpeedRange.y);
         }
         else if (edge == 1)
         {
-            position = new Vector3(bounds.max.x - inset, Random.Range(bounds.min.y, bounds.center.y), 0f);
+            position = new Vector3(bounds.max.x - inset,
+                Random.Range(bounds.min.y, Mathf.Lerp(bounds.min.y, bounds.max.y, 0.28f)), 0f);
             horizontalVelocity = -Random.Range(horizontalSpeedRange.x, horizontalSpeedRange.y);
         }
         else
@@ -124,8 +126,21 @@ public class CharacterSpawner : MonoBehaviour
         // 通过目标最高点反推初始竖直速度，确保抛物线最高点低于屏幕顶部。
         float targetApex = Mathf.Lerp(bounds.min.y, bounds.max.y,
             Random.Range(apexHeightRatioRange.x, apexHeightRatioRange.y));
-        float heightToApex = Mathf.Max(0.5f, targetApex - position.y);
+        float minimumRiseHeight = bounds.size.y * 0.42f;
+        float maximumRiseHeight = Mathf.Max(0.5f, bounds.max.y - inset - position.y);
+        float heightToApex = Mathf.Clamp(targetApex - position.y, minimumRiseHeight, maximumRiseHeight);
         float verticalVelocity = Mathf.Sqrt(2f * gravity * heightToApex);
+
+        if (edge == 2)
+        {
+            // 依据预计回落到底边所需时间限制横向速度，防止从底部生成后过早飞出侧边。
+            float flightTime = verticalVelocity * 2f / gravity;
+            float distanceToLeft = position.x - bounds.min.x;
+            float distanceToRight = bounds.max.x - position.x;
+            float availableDistance = horizontalVelocity < 0f ? distanceToLeft : distanceToRight;
+            float safeHorizontalSpeed = availableDistance * 0.85f / Mathf.Max(0.1f, flightTime);
+            horizontalVelocity = Mathf.Sign(horizontalVelocity) * Mathf.Min(Mathf.Abs(horizontalVelocity), safeHorizontalSpeed);
+        }
 
         GameObject prefab = alivePrefabs[Random.Range(0, alivePrefabs.Count)];
         GameObject character = Instantiate(prefab, position, Quaternion.identity, characterParent);

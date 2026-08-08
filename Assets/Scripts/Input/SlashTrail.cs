@@ -1,80 +1,138 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 读取鼠标或单指滑动，并用四角流线网格绘制短暂的白色刀光。
+/// 读取鼠标或单指滑动，并使用连续轨迹绘制梭形刀光。
 /// </summary>
 [DisallowMultipleComponent]
 public class SlashTrail : MonoBehaviour
 {
     [Header("刀光外观")]
-    [SerializeField, Min(0.01f)] private float startWidth = 0.28f;
-    [SerializeField, Range(0.02f, 1f)] private float endWidthRatio = 0.16f;
-    [SerializeField, Min(0.02f)] private float lifetime = 0.16f;
-    [SerializeField, Range(0f, 1f)] private float endAlpha = 0.2f;
-    [SerializeField, Min(0.001f)] private float minimumDistance = 0.04f;
+    [SerializeField, Min(0.01f)] private float maximumWidth = 0.32f;
+    [SerializeField, Min(0.02f)] private float lifetime = 0.18f;
+    [SerializeField, Min(0.001f)] private float minimumVertexDistance = 0.035f;
+    [SerializeField, Range(2, 16)] private int cornerVertices = 5;
     [SerializeField] private int sortingOrder = 100;
 
-    private readonly List<TrailPiece> pieces = new List<TrailPiece>();
-    private Material trailMaterial;
     private Camera mainCamera;
-    private Vector3 lastPosition;
-    private bool isDrawing;
-
-    private sealed class TrailPiece
-    {
-        public GameObject GameObject;
-        public Material Material;
-        public float CreatedTime;
-    }
+    private Material trailMaterial;
+    private TrailRenderer currentTrail;
 
     /// <summary>
-    /// 创建适合透明刀光的运行时材质。
+    /// 准备刀光所需的透明材质。
     /// </summary>
     private void Awake()
     {
         mainCamera = Camera.main;
         Shader shader = Shader.Find("Sprites/Default");
-        trailMaterial = shader == null ? null : new Material(shader);
+        if (shader != null)
+        {
+            trailMaterial = new Material(shader)
+            {
+                name = "Runtime Slash Trail Material"
+            };
+        }
     }
 
     /// <summary>
-    /// 每帧更新输入、生成刀光片段并清理过期片段。
+    /// 每帧根据鼠标或触摸状态开始、延伸或结束一条刀光。
     /// </summary>
     private void Update()
     {
-        UpdateInput();
-        UpdatePieces();
+        if (!TryGetPointer(out Vector2 screenPosition, out bool began, out bool ended))
+        {
+            return;
+        }
+
+        Vector3 worldPosition = ScreenToWorld(screenPosition);
+        if (began)
+        {
+            BeginTrail(worldPosition);
+        }
+
+        if (currentTrail != null)
+        {
+            currentTrail.transform.position = worldPosition;
+        }
+
+        if (ended)
+        {
+            EndTrail();
+        }
     }
 
     /// <summary>
-    /// 同时兼容移动端单指触摸和编辑器/PC 鼠标输入。
+    /// 创建一条独立轨迹，使上一次滑动可以自然消退。
     /// </summary>
-    private void UpdateInput()
+    private void BeginTrail(Vector3 position)
     {
-        if (TryGetPointer(out Vector2 screenPosition, out bool began, out bool ended))
-        {
-            Vector3 worldPosition = ScreenToWorld(screenPosition);
-            if (began || !isDrawing)
-            {
-                lastPosition = worldPosition;
-                isDrawing = true;
-            }
-            else if (Vector3.Distance(lastPosition, worldPosition) >= minimumDistance)
-            {
-                CreatePiece(lastPosition, worldPosition);
-                lastPosition = worldPosition;
-            }
+        EndTrail();
 
-            if (ended)
-            {
-                isDrawing = false;
-            }
-        }
-        else
+        GameObject trailObject = new GameObject("Slash Trail");
+        trailObject.transform.SetParent(transform, true);
+        trailObject.transform.position = position;
+
+        currentTrail = trailObject.AddComponent<TrailRenderer>();
+        currentTrail.sharedMaterial = trailMaterial;
+        currentTrail.time = lifetime;
+        currentTrail.minVertexDistance = minimumVertexDistance;
+        currentTrail.widthMultiplier = maximumWidth;
+        currentTrail.widthCurve = CreateSpindleCurve();
+        currentTrail.colorGradient = CreateColorGradient();
+        currentTrail.numCornerVertices = cornerVertices;
+        currentTrail.numCapVertices = cornerVertices;
+        currentTrail.textureMode = LineTextureMode.Stretch;
+        currentTrail.alignment = LineAlignment.View;
+        currentTrail.sortingOrder = sortingOrder;
+        currentTrail.emitting = true;
+        currentTrail.Clear();
+    }
+
+    /// <summary>
+    /// 停止当前刀光并在其完全淡出后销毁对象。
+    /// </summary>
+    private void EndTrail()
+    {
+        if (currentTrail == null)
         {
-            isDrawing = false;
+            return;
         }
+
+        currentTrail.emitting = false;
+        Destroy(currentTrail.gameObject, lifetime + 0.05f);
+        currentTrail = null;
+    }
+
+    /// <summary>
+    /// 创建两端尖、中部饱满的宽度曲线，使整条刀光呈梭形。
+    /// </summary>
+    private static AnimationCurve CreateSpindleCurve()
+    {
+        return new AnimationCurve(
+            new Keyframe(0f, 0f, 0f, 4f),
+            new Keyframe(0.28f, 1f),
+            new Keyframe(0.68f, 0.82f),
+            new Keyframe(1f, 0f, -4f, 0f));
+    }
+
+    /// <summary>
+    /// 创建白色透明度渐变，让刀光末端更轻、更自然。
+    /// </summary>
+    private static Gradient CreateColorGradient()
+    {
+        var gradient = new Gradient();
+        gradient.SetKeys(
+            new[]
+            {
+                new GradientColorKey(Color.white, 0f),
+                new GradientColorKey(Color.white, 1f)
+            },
+            new[]
+            {
+                new GradientAlphaKey(0.15f, 0f),
+                new GradientAlphaKey(1f, 0.25f),
+                new GradientAlphaKey(0.35f, 1f)
+            });
+        return gradient;
     }
 
     /// <summary>
@@ -119,81 +177,11 @@ public class SlashTrail : MonoBehaviour
     }
 
     /// <summary>
-    /// 在两个采样点之间创建头宽尾尖、尾部透明度较低的四角刀光。
-    /// </summary>
-    private void CreatePiece(Vector3 start, Vector3 end)
-    {
-        if (trailMaterial == null)
-        {
-            return;
-        }
-
-        Vector2 direction = end - start;
-        Vector2 normal = new Vector2(-direction.y, direction.x).normalized;
-        float halfStartWidth = startWidth * 0.5f;
-        float halfEndWidth = halfStartWidth * endWidthRatio;
-
-        var gameObjectPiece = new GameObject("Slash Trail Piece");
-        gameObjectPiece.transform.SetParent(transform, false);
-        MeshFilter filter = gameObjectPiece.AddComponent<MeshFilter>();
-        MeshRenderer renderer = gameObjectPiece.AddComponent<MeshRenderer>();
-        Material pieceMaterial = new Material(trailMaterial);
-        renderer.sharedMaterial = pieceMaterial;
-        renderer.sortingOrder = sortingOrder;
-
-        Mesh mesh = new Mesh { name = "Slash Trail Quad" };
-        mesh.vertices = new[]
-        {
-            transform.InverseTransformPoint(start + (Vector3)(normal * halfStartWidth)),
-            transform.InverseTransformPoint(start - (Vector3)(normal * halfStartWidth)),
-            transform.InverseTransformPoint(end + (Vector3)(normal * halfEndWidth)),
-            transform.InverseTransformPoint(end - (Vector3)(normal * halfEndWidth))
-        };
-        mesh.triangles = new[] { 0, 2, 1, 2, 3, 1 };
-        mesh.colors = new[]
-        {
-            Color.white, Color.white,
-            new Color(1f, 1f, 1f, endAlpha), new Color(1f, 1f, 1f, endAlpha)
-        };
-        mesh.RecalculateBounds();
-        filter.sharedMesh = mesh;
-
-        pieces.Add(new TrailPiece
-        {
-            GameObject = gameObjectPiece,
-            Material = pieceMaterial,
-            CreatedTime = Time.unscaledTime
-        });
-    }
-
-    /// <summary>
-    /// 让旧刀光逐渐淡出，并销毁超过寿命的网格对象。
-    /// </summary>
-    private void UpdatePieces()
-    {
-        for (int i = pieces.Count - 1; i >= 0; i--)
-        {
-            TrailPiece piece = pieces[i];
-            float progress = (Time.unscaledTime - piece.CreatedTime) / lifetime;
-            if (progress >= 1f)
-            {
-                Destroy(piece.GameObject);
-                Destroy(piece.Material);
-                pieces.RemoveAt(i);
-                continue;
-            }
-
-            Color color = Color.white;
-            color.a = 1f - progress;
-            piece.Material.color = color;
-        }
-    }
-
-    /// <summary>
-    /// 释放运行时创建的材质。
+    /// 结束未完成的刀光并释放运行时材质。
     /// </summary>
     private void OnDestroy()
     {
+        EndTrail();
         if (trailMaterial != null)
         {
             Destroy(trailMaterial);
