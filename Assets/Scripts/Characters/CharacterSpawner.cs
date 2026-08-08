@@ -27,6 +27,7 @@ public class CharacterSpawner : MonoBehaviour
 
     private Coroutine spawnRoutine;
     private int waveIndex;
+    private bool hasWarnedInvalidPrefab;
 
     /// <summary>
     /// 从第一波开始生成；重复调用不会创建多条协程。
@@ -35,6 +36,7 @@ public class CharacterSpawner : MonoBehaviour
     {
         StopSpawning();
         waveIndex = 0;
+        hasWarnedInvalidPrefab = false;
         spawnRoutine = StartCoroutine(SpawnLoop());
     }
 
@@ -93,9 +95,17 @@ public class CharacterSpawner : MonoBehaviour
     /// </summary>
     private void SpawnCharacter()
     {
-        if (alivePrefabs.Count == 0)
+        GameObject prefab = GetRandomValidPrefab();
+        if (prefab == null)
         {
-            Debug.LogWarning("CharacterSpawner 尚未配置 alivePrefabs。", this);
+            if (!hasWarnedInvalidPrefab)
+            {
+                Debug.LogWarning(
+                    "CharacterSpawner 没有可用的角色预制体。请将 Project 窗口中的 _alive 预制体资源拖入 Alive Prefabs，不要使用场景实例。",
+                    this);
+                hasWarnedInvalidPrefab = true;
+            }
+
             return;
         }
 
@@ -142,7 +152,6 @@ public class CharacterSpawner : MonoBehaviour
             horizontalVelocity = Mathf.Sign(horizontalVelocity) * Mathf.Min(Mathf.Abs(horizontalVelocity), safeHorizontalSpeed);
         }
 
-        GameObject prefab = alivePrefabs[Random.Range(0, alivePrefabs.Count)];
         GameObject character = Instantiate(prefab, position, Quaternion.identity, characterParent);
         CharacterMovement movement = character.GetComponent<CharacterMovement>();
         if (movement == null)
@@ -152,5 +161,30 @@ public class CharacterSpawner : MonoBehaviour
 
         movement.Initialize(new Vector2(horizontalVelocity, verticalVelocity), gravity,
             Random.Range(angularSpeedRange.x, angularSpeedRange.y));
+    }
+
+    /// <summary>
+    /// 从列表中随机选择仍然存在的预制体资源，并排除可能被销毁的场景实例。
+    /// </summary>
+    private GameObject GetRandomValidPrefab()
+    {
+        GameObject selectedPrefab = null;
+        int validCount = 0;
+
+        foreach (GameObject prefab in alivePrefabs)
+        {
+            if (prefab == null || prefab.scene.IsValid())
+            {
+                continue;
+            }
+
+            validCount++;
+            if (Random.Range(0, validCount) == 0)
+            {
+                selectedPrefab = prefab;
+            }
+        }
+
+        return selectedPrefab;
     }
 }
