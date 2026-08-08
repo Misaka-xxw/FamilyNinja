@@ -122,6 +122,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &300852947 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1131115824384828558, guid: bbbee6108f861b14cb1eebbeb0de260a, type: 3}
+  m_PrefabInstance: {fileID: 1950382390878785210}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &378404089
 GameObject:
   m_ObjectHideFlags: 0
@@ -131,6 +136,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 378404090}
+  - component: {fileID: 378404093}
+  - component: {fileID: 378404092}
+  - component: {fileID: 378404091}
   m_Layer: 0
   m_Name: GameController
   m_TagString: Untagged
@@ -153,6 +161,62 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &378404091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 378404089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d913ef33d0167844984fad01d51ed3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxLives: 10
+  gameStarted: 1
+--- !u!114 &378404092
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 378404089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5dd6953fa2599be4ab1135fb5488d601, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  startWidth: 0.28
+  endWidthRatio: 0.02
+  lifetime: 0.16
+  endAlpha: 0.2
+  minimumDistance: 0.04
+  sortingOrder: 100
+--- !u!114 &378404093
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 378404089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 467e64d4b17f04b42a0315f01f5114bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  alivePrefabs:
+  - {fileID: 300852947}
+  characterParent: {fileID: 0}
+  firstWaveDelay: 0.5
+  initialWaveInterval: 2.2
+  minimumWaveInterval: 0.7
+  intervalDecreasePerWave: 0.06
+  characterDelayInWave: 0.15
+  gravity: 12
+  horizontalSpeedRange: {x: 2.2, y: 4.5}
+  apexHeightRatioRange: {x: 0.58, y: 0.88}
+  angularSpeedRange: {x: -100, y: 100}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
