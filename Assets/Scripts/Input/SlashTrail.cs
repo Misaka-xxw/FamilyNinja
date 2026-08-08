@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -6,6 +7,10 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class SlashTrail : MonoBehaviour
 {
+    public static event Action<Vector2> SlashStarted;
+    public static event Action<Vector2, Vector2> SlashMoved;
+    public static event Action SlashEnded;
+
     [Header("刀光外观")]
     [SerializeField, Min(0.01f)] private float maximumWidth = 0.32f;
     [SerializeField, Min(0.02f)] private float lifetime = 0.18f;
@@ -16,6 +21,7 @@ public class SlashTrail : MonoBehaviour
     private Camera mainCamera;
     private Material trailMaterial;
     private TrailRenderer currentTrail;
+    private Vector3 lastWorldPosition;
 
     /// <summary>
     /// 准备刀光所需的透明材质。
@@ -47,15 +53,24 @@ public class SlashTrail : MonoBehaviour
         if (began)
         {
             BeginTrail(worldPosition);
+            lastWorldPosition = worldPosition;
+            SlashStarted?.Invoke(worldPosition);
         }
 
         if (currentTrail != null)
         {
+            if (!began && Vector3.Distance(lastWorldPosition, worldPosition) >= minimumVertexDistance)
+            {
+                SlashMoved?.Invoke(lastWorldPosition, worldPosition);
+                lastWorldPosition = worldPosition;
+            }
+
             currentTrail.transform.position = worldPosition;
         }
 
         if (ended)
         {
+            SlashEnded?.Invoke();
             EndTrail();
         }
     }

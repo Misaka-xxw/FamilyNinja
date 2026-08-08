@@ -10,18 +10,22 @@ public class CharacterMovement : MonoBehaviour
 
     public Vector2 Velocity { get; private set; }
     public float AngularSpeed { get; private set; }
+    public float Gravity => gravity;
 
     private float gravity;
     private bool initialized;
+    private bool countsAsMiss = true;
 
     /// <summary>
     /// 设置角色的初速度、重力和角速度。
     /// </summary>
-    public void Initialize(Vector2 initialVelocity, float gravityValue, float angularSpeed)
+    public void Initialize(Vector2 initialVelocity, float gravityValue, float angularSpeed,
+        bool shouldCountAsMiss = true)
     {
         Velocity = initialVelocity;
         gravity = Mathf.Abs(gravityValue);
         AngularSpeed = angularSpeed;
+        countsAsMiss = shouldCountAsMiss;
         initialized = true;
     }
 
@@ -42,7 +46,10 @@ public class CharacterMovement : MonoBehaviour
 
         if (HasLeftPlayArea())
         {
-            GameController.Instance?.RegisterMiss();
+            if (countsAsMiss)
+            {
+                GameController.Instance?.RegisterMiss();
+            }
             Destroy(gameObject);
         }
     }
