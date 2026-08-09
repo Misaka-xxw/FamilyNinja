@@ -339,6 +339,11 @@ public class BeCutted : MonoBehaviour
         GameObject half = Instantiate(deadPrefab, transform.position, transform.rotation, transform.parent);
         half.transform.localScale = transform.localScale;
 
+        if (half.GetComponent<CharacterShadow>() == null)
+        {
+            half.AddComponent<CharacterShadow>();
+        }
+
         SpriteRenderer[] renderers = half.GetComponentsInChildren<SpriteRenderer>();
         foreach (SpriteRenderer spriteRenderer in renderers)
         {

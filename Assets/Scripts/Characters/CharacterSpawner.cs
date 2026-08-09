@@ -166,6 +166,11 @@ public class CharacterSpawner : MonoBehaviour
         }
 
         GameObject character = Instantiate(prefab, position, Quaternion.identity, characterParent);
+        if (character.GetComponent<CharacterShadow>() == null)
+        {
+            character.AddComponent<CharacterShadow>();
+        }
+
         CharacterMovement movement = character.GetComponent<CharacterMovement>();
         if (movement == null)
         {
