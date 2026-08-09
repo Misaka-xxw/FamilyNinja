@@ -51,6 +51,23 @@ public class GameController : MonoBehaviour
     }
 
     /// <summary>
+    /// 按下 ESC 时退出游戏；在 Unity 编辑器中停止播放。
+    /// </summary>
+    private void Update()
+    {
+        if (!Input.GetKeyDown(KeyCode.Escape))
+        {
+            return;
+        }
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
+
+    /// <summary>
     /// 重置本局数据并开始生成角色。
     /// </summary>
     public void StartGame()
