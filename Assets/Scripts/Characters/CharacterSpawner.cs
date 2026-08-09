@@ -35,6 +35,7 @@ public class CharacterSpawner : MonoBehaviour
     public void BeginSpawning()
     {
         StopSpawning();
+        ClearCharacters();
         waveIndex = 0;
         hasWarnedInvalidPrefab = false;
         spawnRoutine = StartCoroutine(SpawnLoop());
@@ -49,6 +50,18 @@ public class CharacterSpawner : MonoBehaviour
         {
             StopCoroutine(spawnRoutine);
             spawnRoutine = null;
+        }
+    }
+
+    /// <summary>
+    /// 清理上一局仍留在场景中的存活角色和死亡碎片。
+    /// </summary>
+    public void ClearCharacters()
+    {
+        CharacterMovement[] characters = FindObjectsOfType<CharacterMovement>();
+        foreach (CharacterMovement character in characters)
+        {
+            Destroy(character.gameObject);
         }
     }
 
