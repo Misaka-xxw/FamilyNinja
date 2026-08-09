@@ -169,7 +169,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d913ef33d0167844984fad01d51ed3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxLives: 10
+  maxLives: 9
   gameStarted: 0
 --- !u!114 &378404092
 MonoBehaviour:
@@ -717,9 +717,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2835810c52c143b794db2cebbb785ff1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  duration: 0.22
-  strength: 0.18
-  frequency: 45
 --- !u!1 &871428556
 GameObject:
   m_ObjectHideFlags: 0
