@@ -171,23 +171,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxLives: 10
   gameStarted: 0
---- !u!114 &378404094
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 378404089}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7e426cc166be41a783925dab36c6e376, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  startCanvas: {fileID: 779583953}
-  hudCanvas: {fileID: 428135541}
-  scoreText: {fileID: 1609309842}
-  lifeText: {fileID: 1845780153}
-  startButton: {fileID: 2085223363}
 --- !u!114 &378404092
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -232,6 +215,23 @@ MonoBehaviour:
   horizontalSpeedRange: {x: 2.2, y: 4.5}
   apexHeightRatioRange: {x: 0.58, y: 0.88}
   angularSpeedRange: {x: -100, y: 100}
+--- !u!114 &378404094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 378404089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4eb2a02be08f5547a8a8fb03bd92541, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  startCanvas: {fileID: 779583953}
+  hudCanvas: {fileID: 428135541}
+  scoreText: {fileID: 1609309842}
+  lifeText: {fileID: 1845780153}
+  startButton: {fileID: 2085223363}
 --- !u!1 &428135541
 GameObject:
   m_ObjectHideFlags: 0
@@ -323,7 +323,7 @@ RectTransform:
   m_GameObject: {fileID: 428135541}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1609309841}
@@ -463,7 +463,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -330, y: -70}
+  m_AnchoredPosition: {x: -597, y: -90}
   m_SizeDelta: {x: 85.306, y: 85.306}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &745067166
@@ -595,7 +595,7 @@ RectTransform:
   m_GameObject: {fileID: 779583953}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2085223362}
@@ -1148,7 +1148,7 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 2
     m_MaxSize: 200
-    m_Alignment: 0
+    m_Alignment: 1
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
